@@ -47,6 +47,12 @@ docker-compose build
 
 The Dockerfile installs the `tesseract-ocr` package so that text can be
 extracted from images. Build while online to fetch this dependency.
+If you run the tests directly on your host instead of through Docker,
+you'll need to install `tesseract-ocr` yourself:
+
+```bash
+sudo apt-get install -y tesseract-ocr libtesseract-dev
+```
 
 After the build completes you can disconnect from the internet and start the
 stack normally:
