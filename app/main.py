@@ -6,6 +6,7 @@ from utils import (
     create_vector_store,
     get_qa_chain,
     summarize_text,
+    rewrite_question,
 )
 
 st.set_page_config(page_title="🔐 LLaMA 3 Document Q&A", layout="wide")
@@ -96,8 +97,9 @@ if st.session_state.qa:
     if prompt := st.chat_input("Ask a question about your document:"):
         with st.chat_message("user"):
             st.markdown(prompt)
+        clarified = rewrite_question(prompt, st.session_state.history)
         with st.spinner("Thinking…"):
-            result = st.session_state.qa.invoke({"question": prompt})
+            result = st.session_state.qa.invoke({"question": clarified})
             answer = result["answer"]
             docs = result.get("source_documents", [])
             if docs:
