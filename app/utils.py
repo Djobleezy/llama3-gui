@@ -139,3 +139,23 @@ def get_qa_chain(
         return_source_documents=True,
     )
 
+
+def rewrite_question(
+    question: str, history: list[tuple[str, str]] | None = None
+) -> str:
+    """Return a clarified version of ``question`` using conversation context."""
+    base_url = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
+    llm = Ollama(model="llama3", base_url=base_url, temperature=0.0)
+    history_text = ""
+    if history:
+        history_text = "\n".join(f"{r}: {m}" for r, m in history[-6:])
+    prompt = (
+        "Rewrite the following user question to be clear and self contained."\
+        " Use the prior conversation for context if helpful.\n\n"\
+        f"History:\n{history_text}\n\nQuestion: {question}\n\nRewritten:"
+    )
+    try:
+        return llm.invoke(prompt).strip()
+    except Exception:
+        return question
+
