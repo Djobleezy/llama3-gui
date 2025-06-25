@@ -10,6 +10,9 @@ from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
 from langchain.schema import Document
 
+# Maximum number of tokens supported by the model.
+MAX_TOKENS = 8192
+
 
 def summarize_text(text: str) -> str:
     """Return a short summary of ``text`` using LLaMA 3."""
@@ -125,7 +128,7 @@ def get_qa_chain(
         model="llama3",
         base_url=base_url,
         temperature=temperature,
-        num_predict=max_tokens,
+        num_predict=min(max_tokens, MAX_TOKENS),
     )
     memory = ConversationBufferMemory(
         memory_key="chat_history",

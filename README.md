@@ -16,7 +16,7 @@ The app now maintains context between questions using a conversational retrieval
 - Persistent search indexes for faster reuse.
 - Page references in answers when available.
 - A button to download your chat transcript.
-- Sliders to tweak model temperature and token limits (default 8192 tokens).
+- Sliders to tweak model temperature and token limits (up to 8192 tokens).
 
 The temperature slider controls the randomness of the model's responses:
 higher values lead to more varied answers. The token limit sets the

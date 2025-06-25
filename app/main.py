@@ -7,6 +7,7 @@ from utils import (
     get_qa_chain,
     summarize_text,
     rewrite_question,
+    MAX_TOKENS,
 )
 
 st.set_page_config(page_title="🔐 LLaMA 3 Document Q&A", layout="wide")
@@ -36,7 +37,9 @@ with st.sidebar:
     )
     tokens = st.number_input(
         "Max tokens",
-        value=8192,
+        value=MAX_TOKENS,
+        max_value=MAX_TOKENS,
+        min_value=64,
         step=64,
         help="Limits the length of the model's response",
     )
@@ -54,7 +57,7 @@ if "history" not in st.session_state:
 if "qa" not in st.session_state:
     st.session_state.qa = None
 st.session_state.temperature = temp
-st.session_state.max_tokens = int(tokens)
+st.session_state.max_tokens = min(int(tokens), MAX_TOKENS)
 
 uploaded_files = st.file_uploader(
     "Upload documents",
