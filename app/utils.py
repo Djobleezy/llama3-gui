@@ -74,13 +74,13 @@ def load_pptx(path: str) -> list[Document]:
 
 def load_pdf_with_password(path: str, password: str) -> list[Document]:
     """Return the text from a PDF, unlocking it with the given password."""
-    doc = fitz.open(path)
-    if doc.needs_pass and not doc.authenticate(password):
-        raise ValueError("Incorrect password")
-    docs = [
-        Document(page_content=page.get_text(), metadata={"page": i + 1})
-        for i, page in enumerate(doc)
-    ]
+    with fitz.open(path) as doc:
+        if doc.needs_pass and not doc.authenticate(password):
+            raise ValueError("Incorrect password")
+        docs = [
+            Document(page_content=page.get_text(), metadata={"page": i + 1})
+            for i, page in enumerate(doc)
+        ]
     return docs
 
 
