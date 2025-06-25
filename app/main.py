@@ -13,6 +13,12 @@ from utils import (
 st.set_page_config(page_title="🔐 LLaMA 3 Document Q&A", layout="wide")
 st.title("🔐 LLaMA 3 Document Q&A with Password Support")
 
+# Show a persistent summary at the top of the page
+if "summary" not in st.session_state:
+    st.session_state.summary = ""
+if st.session_state.summary:
+    st.info(f"**Summary:** {st.session_state.summary}")
+
 # ─── Sidebar controls ────────────────────────────────────────────────────
 with st.sidebar:
     st.header("Session")
@@ -82,7 +88,9 @@ if uploaded_files and st.button("Process document"):
     if docs:
         st.success("✅ Documents loaded and parsed successfully.")
         text = "\n".join(d.page_content for d in docs)
-        st.info(f"**Summary:** {summarize_text(text)}")
+        summary = summarize_text(text)
+        st.session_state.summary = summary
+        st.info(f"**Summary:** {summary}")
         vector_store = create_vector_store(docs, "store")
         st.session_state.qa = get_qa_chain(
             vector_store,
