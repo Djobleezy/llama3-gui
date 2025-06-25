@@ -8,10 +8,11 @@ from utils import (
     summarize_text,
     rewrite_question,
     MAX_TOKENS,
+    DEFAULT_MODEL,
 )
 
-st.set_page_config(page_title="🔐 LLaMA 3 Document Q&A", layout="wide")
-st.title("🔐 LLaMA 3 Document Q&A with Password Support")
+st.set_page_config(page_title="🔐 Local Document Q&A", layout="wide")
+st.title("🔐 Local Document Q&A with Password Support")
 
 # Layout the page in three adjustable columns
 col_upload, col_summary, col_chat = st.columns([1, 1, 2])
@@ -27,6 +28,10 @@ with col_upload:
 
 if "summary" not in st.session_state:
     st.session_state.summary = ""
+if "model" not in st.session_state:
+    st.session_state.model = DEFAULT_MODEL
+if "vector_store" not in st.session_state:
+    st.session_state.vector_store = None
 with col_summary:
     if st.session_state.summary:
         st.info(f"**Summary:** {st.session_state.summary}")
@@ -45,6 +50,26 @@ with st.sidebar:
         st.session_state.history = []
     st.divider()
     st.header("Model")
+    models = ["llama3", "DeepSeek-R1-Distill-Qwen-32B"]
+    current = st.session_state.model
+    model_choice = st.selectbox("Model", models, index=models.index(current))
+    if model_choice != current:
+        st.session_state.model = model_choice
+        st.session_state.history = []
+        if st.session_state.vector_store is not None:
+            st.session_state.qa = get_qa_chain(
+                st.session_state.vector_store,
+                temperature=st.session_state.temperature,
+                max_tokens=st.session_state.max_tokens,
+                model=st.session_state.model,
+            )
+        else:
+            st.session_state.qa = None
+            st.session_state.vector_store = None
+        if hasattr(st, "rerun"):
+            st.rerun()
+        else:
+            st.experimental_rerun()
     temp = st.slider(
         "Temperature",
         0.0,
@@ -93,15 +118,16 @@ if uploaded_files and process_clicked:
             with col_upload:
                 st.success("✅ Documents loaded and parsed successfully.")
             text = "\n".join(d.page_content for d in docs)
-            summary = summarize_text(text)
+            summary = summarize_text(text, model=st.session_state.model)
             st.session_state.summary = summary
             with col_summary:
                 st.info(f"**Summary:** {summary}")
-            vector_store = create_vector_store(docs, "store")
+            st.session_state.vector_store = create_vector_store(docs, "store")
             st.session_state.qa = get_qa_chain(
-                vector_store,
+                st.session_state.vector_store,
                 temperature=st.session_state.temperature,
                 max_tokens=st.session_state.max_tokens,
+                model=st.session_state.model,
             )
         else:
             st.session_state.qa = None
@@ -115,7 +141,11 @@ if st.session_state.qa:
         if prompt := st.chat_input("Ask a question about your document:"):
             with st.chat_message("user"):
                 st.markdown(prompt)
-            clarified = rewrite_question(prompt, st.session_state.history)
+            clarified = rewrite_question(
+                prompt,
+                st.session_state.history,
+                model=st.session_state.model,
+            )
             with st.spinner("Thinking…"):
                 result = st.session_state.qa.invoke({"question": clarified})
                 answer = result["answer"]
