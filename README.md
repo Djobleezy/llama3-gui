@@ -9,7 +9,7 @@ This project provides a minimal interface for querying local documents using the
 3. Open `http://localhost:8501` in your browser and upload a PDF, DOCX, TXT or PPTX file. If you upload a PDF that is password protected, supply the password when prompted.
 4. Use the chat box at the bottom to ask questions about the document. Messages appear in a chat-style layout and the sidebar lets you reset or clear history.
 
-The app keeps a simple history of your questions and answers for the current session. The sidebar provides buttons to start a fresh chat or clear the existing conversation.
+The app now maintains context between questions using a conversational retrieval chain with memory. The sidebar provides buttons to start a fresh chat or clear the existing conversation.
 
 ## Development
 
