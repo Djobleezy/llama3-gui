@@ -3,13 +3,16 @@ version: '3.8'
 networks:
   llama-net:
     driver: bridge
+    internal: true
 
 volumes:
   ollama_data:
 
 services:
   ollama:
-    image: ollama/ollama:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.ollama
     container_name: ollama
     restart: unless-stopped
     volumes:
@@ -28,15 +31,7 @@ services:
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     # ────────────────────────────────────────────────────────────────────────
 
-    entrypoint: >
-      /bin/sh -ce '
-        echo "⚙️  Starting Ollama server…";
-        ollama serve & OLLAMA_PID=$!;
-        echo "🛑  Waiting 5s for server…"; sleep 5;
-        echo "⬇️  Pulling llama3…"; ollama pull llama3;
-        echo "✅  Ready — serving forever";
-        wait $OLLAMA_PID
-      '
+    entrypoint: ["ollama", "serve"]
 
   llama-rag:
     build:

@@ -74,31 +74,31 @@ password = st.text_input("Enter PDF password (if any)", type="password")
 
 if uploaded_files and st.button("Process document"):
     docs = []
-    for f in uploaded_files:
-        ext = os.path.splitext(f.name)[1]
-        with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
-            tmp.write(f.read())
-            tmp_path = tmp.name
-        try:
-            docs.extend(load_document(tmp_path, password))
-        except Exception as e:
-            st.error(f"{f.name}: {e}")
-        finally:
-            os.unlink(tmp_path)
-    if docs:
-        st.success("✅ Documents loaded and parsed successfully.")
-        text = "\n".join(d.page_content for d in docs)
-        summary = summarize_text(text)
-        st.session_state.summary = summary
-        st.info(f"**Summary:** {summary}")
-        vector_store = create_vector_store(docs, "store")
-        st.session_state.qa = get_qa_chain(
-            vector_store,
-            temperature=st.session_state.temperature,
-            max_tokens=st.session_state.max_tokens,
-        )
-    else:
-        st.session_state.qa = None
+    with tempfile.TemporaryDirectory() as tmpdir:
+        for f in uploaded_files:
+            ext = os.path.splitext(f.name)[1]
+            tmp_path = os.path.join(tmpdir, os.path.basename(f.name))
+            with open(tmp_path, "wb") as tmp:
+                os.chmod(tmp_path, 0o600)
+                tmp.write(f.read())
+            try:
+                docs.extend(load_document(tmp_path, password))
+            except Exception as e:
+                st.error(f"{f.name}: {e}")
+        if docs:
+            st.success("✅ Documents loaded and parsed successfully.")
+            text = "\n".join(d.page_content for d in docs)
+            summary = summarize_text(text)
+            st.session_state.summary = summary
+            st.info(f"**Summary:** {summary}")
+            vector_store = create_vector_store(docs, "store")
+            st.session_state.qa = get_qa_chain(
+                vector_store,
+                temperature=st.session_state.temperature,
+                max_tokens=st.session_state.max_tokens,
+            )
+        else:
+            st.session_state.qa = None
 
 if st.session_state.qa:
     for msg in st.session_state.history:
