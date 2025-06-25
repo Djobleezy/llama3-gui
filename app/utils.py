@@ -12,13 +12,35 @@ from langchain.schema import Document
 
 
 def summarize_text(text: str) -> str:
-    """Return a short summary of ``text`` using LLaMA 3."""
+    """Return a comprehensive summary of ``text`` using LLaMA 3.
+
+    The text is processed in 4000 character chunks to ensure the model has
+    sufficient context. Each chunk is summarized individually and the
+    resulting summaries are combined into a final overview.
+    """
+
     if not text:
         return ""
+
     base_url = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
     llm = Ollama(model="llama3", base_url=base_url, temperature=0.1)
-    prompt = f"Summarize this text in a few sentences:\n\n{text[:4000]}"
-    return llm.invoke(prompt).strip()
+
+    chunk_size = 4000
+    chunks = [text[i : i + chunk_size] for i in range(0, len(text), chunk_size)]
+    partial_summaries: list[str] = []
+
+    for chunk in chunks:
+        prompt = f"Summarize the following text:\n\n{chunk}"
+        partial_summaries.append(llm.invoke(prompt).strip())
+
+    if len(partial_summaries) == 1:
+        return partial_summaries[0]
+
+    combo_prompt = (
+        "Combine the following summaries into a single comprehensive summary:\n\n"
+        + "\n".join(partial_summaries)
+    )
+    return llm.invoke(combo_prompt).strip()
 
 
 def load_docx(path: str) -> list[Document]:
