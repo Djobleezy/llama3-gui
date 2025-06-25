@@ -6,7 +6,8 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.embeddings import SentenceTransformerEmbeddings
 from langchain.vectorstores import FAISS
 from langchain.llms import Ollama
-from langchain.chains import RetrievalQA
+from langchain.chains import ConversationalRetrievalChain
+from langchain.memory import ConversationBufferMemory
 from langchain.schema import Document
 
 
@@ -86,9 +87,14 @@ def create_vector_store(text: str) -> FAISS:
     return FAISS.from_documents(chunks, embeddings)
 
 
-def get_qa_chain(vector_store: FAISS) -> RetrievalQA:
-    """Set up a RetrievalQA chain using an Ollama LLaMA 3 model."""
+def get_qa_chain(vector_store: FAISS) -> ConversationalRetrievalChain:
+    """Return a conversational QA chain with memory using an Ollama LLaMA 3 model."""
     base_url = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
     llm = Ollama(model="llama3", base_url=base_url)
-    return RetrievalQA.from_chain_type(llm=llm, retriever=vector_store.as_retriever())
+    memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
+    return ConversationalRetrievalChain.from_llm(
+        llm=llm,
+        retriever=vector_store.as_retriever(),
+        memory=memory,
+    )
 
