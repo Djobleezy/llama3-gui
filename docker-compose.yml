@@ -3,7 +3,6 @@ version: '3.8'
 networks:
   llama-net:
     driver: bridge
-    internal: true
 
 volumes:
   ollama_data:

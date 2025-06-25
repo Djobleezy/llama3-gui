@@ -39,8 +39,9 @@ stack normally:
 docker-compose up
 ```
 
-Both containers use an internal Docker network so they cannot reach the
-outside world once running.
+Once started, the stack runs entirely locally and requires no network access.
+If you want to further restrict connectivity, disconnect your machine from the
+internet after building the images.
 
 ## Development
 
