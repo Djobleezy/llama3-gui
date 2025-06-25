@@ -17,9 +17,12 @@ from .ocr_utils import ocr_image
 # Maximum number of tokens supported by the model.
 MAX_TOKENS = 8192
 
+# Default model used by the Ollama API.
+DEFAULT_MODEL = os.getenv("OLLAMA_MODEL", "llama3")
 
-def summarize_text(text: str) -> str:
-    """Return a comprehensive summary of ``text`` using LLaMA 3.
+
+def summarize_text(text: str, model: str = DEFAULT_MODEL) -> str:
+    """Return a comprehensive summary of ``text`` using ``model``.
 
     The text is processed in 4000 character chunks to ensure the model has
     sufficient context. Each chunk is summarized individually and the
@@ -30,7 +33,7 @@ def summarize_text(text: str) -> str:
         return ""
 
     base_url = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
-    llm = Ollama(model="llama3", base_url=base_url, temperature=0.1)
+    llm = Ollama(model=model, base_url=base_url, temperature=0.1)
 
     chunk_size = 4000
     chunks = [text[i : i + chunk_size] for i in range(0, len(text), chunk_size)]
@@ -160,11 +163,12 @@ def get_qa_chain(
     vector_store: FAISS,
     temperature: float = 0.1,
     max_tokens: int = 8192,
+    model: str = DEFAULT_MODEL,
 ) -> ConversationalRetrievalChain:
-    """Return a conversational QA chain with memory using LLaMA 3."""
+    """Return a conversational QA chain with memory using ``model``."""
     base_url = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
     llm = Ollama(
-        model="llama3",
+        model=model,
         base_url=base_url,
         temperature=temperature,
         num_predict=min(max_tokens, MAX_TOKENS),
@@ -183,11 +187,12 @@ def get_qa_chain(
 
 
 def rewrite_question(
-    question: str, history: list[tuple[str, str]] | None = None
+    question: str, history: list[tuple[str, str]] | None = None,
+    model: str = DEFAULT_MODEL,
 ) -> str:
     """Return a clarified version of ``question`` using conversation context."""
     base_url = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
-    llm = Ollama(model="llama3", base_url=base_url, temperature=0.0)
+    llm = Ollama(model=model, base_url=base_url, temperature=0.0)
     history_text = ""
     if history:
         history_text = "\n".join(f"{r}: {m}" for r, m in history[-6:])
