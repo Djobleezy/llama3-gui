@@ -36,7 +36,7 @@ with st.sidebar:
     )
     tokens = st.number_input(
         "Max tokens",
-        value=256,
+        value=8192,
         step=64,
         help="Limits the length of the model's response",
     )
