@@ -22,6 +22,17 @@ The temperature slider controls the randomness of the model's responses:
 higher values lead to more varied answers. The token limit sets the
 maximum length of each reply.
 
+## Minimum requirements
+
+Running the full stack locally requires a machine with at least:
+
+- 4 CPU cores
+- 8 GB of system memory
+- 12 GB of free disk space for the model and indexes
+- (optional) a GPU with 8 GB or more of VRAM for faster inference
+
+The containers should run on Linux, macOS or Windows as long as Docker is available.
+
 ## Offline usage
 
 To run in an airgapped environment you must build the Docker images while you
