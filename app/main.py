@@ -13,11 +13,24 @@ from utils import (
 st.set_page_config(page_title="🔐 LLaMA 3 Document Q&A", layout="wide")
 st.title("🔐 LLaMA 3 Document Q&A with Password Support")
 
-# Show a persistent summary at the top of the page
+# Containers to keep the upload widgets pinned to the top
+upload_area = st.container()
+summary_area = st.container()
+
+with upload_area:
+    uploaded_files = st.file_uploader(
+        "Upload documents",
+        type=["pdf", "docx", "txt", "pptx"],
+        accept_multiple_files=True,
+    )
+    password = st.text_input("Enter PDF password (if any)", type="password")
+    process_clicked = st.button("Process document")
+
 if "summary" not in st.session_state:
     st.session_state.summary = ""
-if st.session_state.summary:
-    st.info(f"**Summary:** {st.session_state.summary}")
+with summary_area:
+    if st.session_state.summary:
+        st.info(f"**Summary:** {st.session_state.summary}")
 
 # ─── Sidebar controls ────────────────────────────────────────────────────
 with st.sidebar:
@@ -65,18 +78,10 @@ if "qa" not in st.session_state:
 st.session_state.temperature = temp
 st.session_state.max_tokens = min(int(tokens), MAX_TOKENS)
 
-uploaded_files = st.file_uploader(
-    "Upload documents",
-    type=["pdf", "docx", "txt", "pptx"],
-    accept_multiple_files=True,
-)
-password = st.text_input("Enter PDF password (if any)", type="password")
-
-if uploaded_files and st.button("Process document"):
+if uploaded_files and process_clicked:
     docs = []
     with tempfile.TemporaryDirectory() as tmpdir:
         for f in uploaded_files:
-            ext = os.path.splitext(f.name)[1]
             tmp_path = os.path.join(tmpdir, os.path.basename(f.name))
             with open(tmp_path, "wb") as tmp:
                 os.chmod(tmp_path, 0o600)
@@ -90,7 +95,8 @@ if uploaded_files and st.button("Process document"):
             text = "\n".join(d.page_content for d in docs)
             summary = summarize_text(text)
             st.session_state.summary = summary
-            st.info(f"**Summary:** {summary}")
+            with summary_area:
+                st.info(f"**Summary:** {summary}")
             vector_store = create_vector_store(docs, "store")
             st.session_state.qa = get_qa_chain(
                 vector_store,
