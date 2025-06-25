@@ -25,8 +25,20 @@ with st.sidebar:
         st.session_state.history = []
     st.divider()
     st.header("Model")
-    temp = st.slider("Temperature", 0.0, 1.0, 0.1, step=0.05)
-    tokens = st.number_input("Max tokens", value=256, step=64)
+    temp = st.slider(
+        "Temperature",
+        0.0,
+        1.0,
+        0.1,
+        step=0.05,
+        help="Higher values generate more random output",
+    )
+    tokens = st.number_input(
+        "Max tokens",
+        value=256,
+        step=64,
+        help="Limits the length of the model's response",
+    )
     if st.session_state.get("history"):
         transcript = "\n".join(f"{r}: {m}" for r, m in st.session_state.history)
         st.download_button(
