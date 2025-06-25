@@ -11,13 +11,27 @@ from langchain.memory import ConversationBufferMemory
 from langchain.schema import Document
 
 
-def load_docx(path: str) -> str:
+def summarize_text(text: str) -> str:
+    """Return a short summary of ``text`` using LLaMA 3."""
+    if not text:
+        return ""
+    base_url = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
+    llm = Ollama(model="llama3", base_url=base_url, temperature=0.1)
+    prompt = f"Summarize this text in a few sentences:\n\n{text[:4000]}"
+    return llm.invoke(prompt).strip()
+
+
+def load_docx(path: str) -> list[Document]:
     """Return the text content from a DOCX file."""
     doc = docx.Document(path)
-    return "\n".join(paragraph.text for paragraph in doc.paragraphs)
+    docs = []
+    for i, paragraph in enumerate(doc.paragraphs, start=1):
+        if paragraph.text.strip():
+            docs.append(Document(page_content=paragraph.text, metadata={"paragraph": i}))
+    return docs
 
 
-def load_txt(path: str) -> str:
+def load_txt(path: str) -> list[Document]:
     """Return the text content from a plain text file.
 
     The function first attempts to decode the file as UTF-8. If that fails
@@ -32,39 +46,45 @@ def load_txt(path: str) -> str:
     encodings = ["utf-8", "cp1252", "latin-1"]
     for enc in encodings:
         try:
-            return raw.decode(enc)
+            text = raw.decode(enc)
+            return [Document(page_content=text)]
         except UnicodeDecodeError:
             continue
 
     # As a last resort, drop undecodable bytes.
-    return raw.decode("utf-8", errors="ignore")
+    text = raw.decode("utf-8", errors="ignore")
+    return [Document(page_content=text)]
 
 
-def load_pptx(path: str) -> str:
+def load_pptx(path: str) -> list[Document]:
     """Return the text content from a PowerPoint file."""
     prs = Presentation(path)
-    texts = []
-    for slide in prs.slides:
+    docs = []
+    for i, slide in enumerate(prs.slides, start=1):
+        slide_text = []
         for shape in slide.shapes:
-            if hasattr(shape, "text"):
-                texts.append(shape.text)
-    return "\n".join(texts)
+            if hasattr(shape, "text") and shape.text:
+                slide_text.append(shape.text)
+        if slide_text:
+            docs.append(
+                Document(page_content="\n".join(slide_text), metadata={"page": i})
+            )
+    return docs
 
 
-def load_pdf_with_password(path: str, password: str) -> str | None:
+def load_pdf_with_password(path: str, password: str) -> list[Document]:
     """Return the text from a PDF, unlocking it with the given password."""
-    try:
-        doc = fitz.open(path)
-        if doc.needs_pass:
-            if not doc.authenticate(password):
-                raise ValueError("Incorrect password")
-        text = "".join(page.get_text() for page in doc)
-        return text
-    except Exception as e:
-        return None
+    doc = fitz.open(path)
+    if doc.needs_pass and not doc.authenticate(password):
+        raise ValueError("Incorrect password")
+    docs = [
+        Document(page_content=page.get_text(), metadata={"page": i + 1})
+        for i, page in enumerate(doc)
+    ]
+    return docs
 
 
-def load_document(path: str, password: str = "") -> str | None:
+def load_document(path: str, password: str = "") -> list[Document]:
     """Load text from various document formats based on file extension."""
     ext = os.path.splitext(path)[1].lower()
     if ext == ".pdf":
@@ -75,26 +95,39 @@ def load_document(path: str, password: str = "") -> str | None:
         return load_txt(path)
     if ext in {".ppt", ".pptx"}:
         return load_pptx(path)
-    return None
+    return []
 
 
-def create_vector_store(text: str) -> FAISS:
-    """Create a FAISS vector store from raw text."""
-    docs = [Document(page_content=text)]
+def create_vector_store(docs: list[Document], path: str) -> FAISS:
+    """Create (or load) a persistent FAISS vector store from ``docs``."""
     splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
     chunks = splitter.split_documents(docs)
     embeddings = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
-    return FAISS.from_documents(chunks, embeddings)
+    if os.path.exists(path):
+        return FAISS.load_local(path, embeddings)
+    vector_store = FAISS.from_documents(chunks, embeddings)
+    vector_store.save_local(path)
+    return vector_store
 
 
-def get_qa_chain(vector_store: FAISS) -> ConversationalRetrievalChain:
-    """Return a conversational QA chain with memory using an Ollama LLaMA 3 model."""
+def get_qa_chain(
+    vector_store: FAISS,
+    temperature: float = 0.1,
+    max_tokens: int = 256,
+) -> ConversationalRetrievalChain:
+    """Return a conversational QA chain with memory using LLaMA 3."""
     base_url = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
-    llm = Ollama(model="llama3", base_url=base_url)
+    llm = Ollama(
+        model="llama3",
+        base_url=base_url,
+        temperature=temperature,
+        num_predict=max_tokens,
+    )
     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
     return ConversationalRetrievalChain.from_llm(
         llm=llm,
         retriever=vector_store.as_retriever(),
         memory=memory,
+        return_source_documents=True,
     )
 

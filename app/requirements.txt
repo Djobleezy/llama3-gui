@@ -7,3 +7,5 @@ ollama
 sentence-transformers
 python-docx
 python-pptx
+ruff
+pillow
