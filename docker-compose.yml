@@ -1,0 +1,57 @@
+version: '3.8'
+
+networks:
+  llama-net:
+    driver: bridge
+
+volumes:
+  ollama_data:
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "11434:11434"
+    networks:
+      - llama-net
+
+    # ─── GPU support (optional) ────────────────────────────────────────────
+    # (Requires nvidia‐container‐runtime / Docker 19.03+)
+    runtime: nvidia
+    gpus: all
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    # ────────────────────────────────────────────────────────────────────────
+
+    entrypoint: >
+      /bin/sh -ce '
+        echo "⚙️  Starting Ollama server…";
+        ollama serve & OLLAMA_PID=$!;
+        echo "🛑  Waiting 5s for server…"; sleep 5;
+        echo "⬇️  Pulling llama3…"; ollama pull llama3;
+        echo "✅  Ready — serving forever";
+        wait $OLLAMA_PID
+      '
+
+  llama-rag:
+    build:
+      context: ./app
+    container_name: llama-rag
+    depends_on:
+      - ollama
+    networks:
+      - llama-net
+    volumes:
+      - ./app:/app:cached
+    working_dir: /app
+    ports:
+      - "8501:8501"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+    command: ["streamlit", "run", "main.py"]
+    restart: unless-stopped
