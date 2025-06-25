@@ -12,7 +12,10 @@ with st.sidebar:
     if st.button("New chat / reset", use_container_width=True):
         st.session_state.qa = None
         st.session_state.history = []
-        st.experimental_rerun()
+        if hasattr(st, "rerun"):
+            st.rerun()
+        else:
+            st.experimental_rerun()
     if st.button("Clear history", use_container_width=True):
         st.session_state.history = []
 
