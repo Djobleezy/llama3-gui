@@ -18,6 +18,10 @@ The app now maintains context between questions using a conversational retrieval
 - A button to download your chat transcript.
 - Sliders to tweak model temperature and token limits.
 
+The temperature slider controls the randomness of the model's responses:
+higher values lead to more varied answers. The token limit sets the
+maximum length of each reply.
+
 ## Development
 
 The main functionality lives in `app/main.py` and helper functions in `app/utils.py`. Dependencies are listed in `app/requirements.txt`.
