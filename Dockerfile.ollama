@@ -1,0 +1,10 @@
+FROM ollama/ollama:latest AS builder
+RUN ollama serve & \
+    OLLAMA_PID=$! && \
+    sleep 5 && \
+    ollama pull llama3 && \
+    kill $OLLAMA_PID
+
+FROM ollama/ollama:latest
+COPY --from=builder /root/.ollama /root/.ollama
+ENTRYPOINT ["ollama", "serve"]

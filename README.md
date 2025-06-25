@@ -22,6 +22,27 @@ The temperature slider controls the randomness of the model's responses:
 higher values lead to more varied answers. The token limit sets the
 maximum length of each reply.
 
+## Offline usage
+
+To run in an airgapped environment you must build the Docker images while you
+still have network access. The custom `Dockerfile.ollama` preloads the `llama3`
+model and the app image downloads the required sentence-transformer embeddings.
+
+```bash
+docker-compose build
+```
+
+After the build completes you can disconnect from the internet and start the
+stack normally:
+
+```bash
+docker-compose up
+```
+
+Once started, the stack runs entirely locally and requires no network access.
+If you want to further restrict connectivity, disconnect your machine from the
+internet after building the images.
+
 ## Development
 
 The main functionality lives in `app/main.py` and helper functions in `app/utils.py`. Dependencies are listed in `app/requirements.txt`.
