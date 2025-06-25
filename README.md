@@ -17,6 +17,8 @@ The app now maintains context between questions using a conversational retrieval
 - Page references in answers when available.
 - A button to download your chat transcript.
 - Sliders to tweak model temperature and token limits (up to 8192 tokens).
+- Images embedded in PDFs and PowerPoint slides are OCR'd so their text can be
+  searched as well.
 
 The temperature slider controls the randomness of the model's responses:
 higher values lead to more varied answers. The token limit sets the
@@ -42,6 +44,9 @@ model and the app image downloads the required sentence-transformer embeddings.
 ```bash
 docker-compose build
 ```
+
+The Dockerfile installs the `tesseract-ocr` package so that text can be
+extracted from images. Build while online to fetch this dependency.
 
 After the build completes you can disconnect from the internet and start the
 stack normally:
