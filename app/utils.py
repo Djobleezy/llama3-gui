@@ -117,7 +117,7 @@ def create_vector_store(docs: list[Document], path: str) -> FAISS:
 def get_qa_chain(
     vector_store: FAISS,
     temperature: float = 0.1,
-    max_tokens: int = 256,
+    max_tokens: int = 8192,
 ) -> ConversationalRetrievalChain:
     """Return a conversational QA chain with memory using LLaMA 3."""
     base_url = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
