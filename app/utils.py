@@ -104,7 +104,11 @@ def create_vector_store(docs: list[Document], path: str) -> FAISS:
     chunks = splitter.split_documents(docs)
     embeddings = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
     if os.path.exists(path):
-        return FAISS.load_local(path, embeddings)
+        return FAISS.load_local(
+            path,
+            embeddings,
+            allow_dangerous_deserialization=True,
+        )
     vector_store = FAISS.from_documents(chunks, embeddings)
     vector_store.save_local(path)
     return vector_store
