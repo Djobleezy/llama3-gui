@@ -17,6 +17,8 @@ The app now maintains context between questions using a conversational retrieval
 - Page references in answers when available.
 - A button to download your chat transcript.
 - Sliders to tweak model temperature and token limits (up to 8192 tokens).
+- Images embedded in PDFs and PowerPoint slides are OCR'd so their text can be
+  searched as well.
 - A dropdown to select between `llama3` and `DeepSeek-R1-Distill-Qwen-32B`.
   Changing the model clears the chat history so the new model starts fresh.
 
@@ -44,6 +46,15 @@ the required sentence-transformer embeddings.
 
 ```bash
 docker-compose build
+```
+
+The Dockerfile installs the `tesseract-ocr` package so that text can be
+extracted from images. Build while online to fetch this dependency.
+If you run the tests directly on your host instead of through Docker,
+you'll need to install `tesseract-ocr` yourself:
+
+```bash
+sudo apt-get install -y tesseract-ocr libtesseract-dev
 ```
 
 After the build completes you can disconnect from the internet and start the

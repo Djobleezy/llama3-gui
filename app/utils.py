@@ -1,7 +1,9 @@
 import os
+
 import fitz  # PyMuPDF
 import docx
 from pptx import Presentation
+from pptx.enum.shapes import MSO_SHAPE_TYPE
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.embeddings import SentenceTransformerEmbeddings
 from langchain.vectorstores import FAISS
@@ -9,6 +11,8 @@ from langchain.llms import Ollama
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
 from langchain.schema import Document
+
+from .ocr_utils import ocr_image
 
 # Maximum number of tokens supported by the model.
 MAX_TOKENS = 8192
@@ -85,14 +89,19 @@ def load_txt(path: str) -> list[Document]:
 
 
 def load_pptx(path: str) -> list[Document]:
-    """Return the text content from a PowerPoint file."""
+    """Return the text and OCR'd image content from a PowerPoint file."""
     prs = Presentation(path)
     docs = []
     for i, slide in enumerate(prs.slides, start=1):
-        slide_text = []
+        slide_text: list[str] = []
         for shape in slide.shapes:
             if hasattr(shape, "text") and shape.text:
                 slide_text.append(shape.text)
+            if shape.shape_type == MSO_SHAPE_TYPE.PICTURE:
+                img_bytes = shape.image.blob
+                img_text = ocr_image(img_bytes)
+                if img_text:
+                    slide_text.append(f"[Image text: {img_text}]")
         if slide_text:
             docs.append(
                 Document(page_content="\n".join(slide_text), metadata={"page": i})
@@ -101,14 +110,22 @@ def load_pptx(path: str) -> list[Document]:
 
 
 def load_pdf_with_password(path: str, password: str) -> list[Document]:
-    """Return the text from a PDF, unlocking it with the given password."""
+    """Return the text and OCR'd images from a PDF."""
     with fitz.open(path) as doc:
         if doc.needs_pass and not doc.authenticate(password):
             raise ValueError("Incorrect password")
-        docs = [
-            Document(page_content=page.get_text(), metadata={"page": i + 1})
-            for i, page in enumerate(doc)
-        ]
+        docs = []
+        for i, page in enumerate(doc, start=1):
+            text = page.get_text()
+            try:
+                pix = page.get_pixmap()
+                img_data = pix.tobytes("png")
+                img_text = ocr_image(img_data)
+                if img_text:
+                    text += f"\n[Image text: {img_text}]"
+            except Exception:
+                pass
+            docs.append(Document(page_content=text, metadata={"page": i}))
     return docs
 
 
