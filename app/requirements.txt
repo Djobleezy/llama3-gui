@@ -5,3 +5,5 @@ faiss-cpu
 PyMuPDF
 ollama
 sentence-transformers
+python-docx
+python-pptx

@@ -1,11 +1,36 @@
 import os
 import fitz  # PyMuPDF
+import docx
+from pptx import Presentation
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.embeddings import SentenceTransformerEmbeddings
 from langchain.vectorstores import FAISS
 from langchain.llms import Ollama
 from langchain.chains import RetrievalQA
 from langchain.schema import Document
+
+
+def load_docx(path: str) -> str:
+    """Return the text content from a DOCX file."""
+    doc = docx.Document(path)
+    return "\n".join(paragraph.text for paragraph in doc.paragraphs)
+
+
+def load_txt(path: str) -> str:
+    """Return the text content from a plain text file."""
+    with open(path, "r", encoding="utf-8") as f:
+        return f.read()
+
+
+def load_pptx(path: str) -> str:
+    """Return the text content from a PowerPoint file."""
+    prs = Presentation(path)
+    texts = []
+    for slide in prs.slides:
+        for shape in slide.shapes:
+            if hasattr(shape, "text"):
+                texts.append(shape.text)
+    return "\n".join(texts)
 
 
 def load_pdf_with_password(path: str, password: str) -> str | None:
@@ -19,6 +44,20 @@ def load_pdf_with_password(path: str, password: str) -> str | None:
         return text
     except Exception as e:
         return None
+
+
+def load_document(path: str, password: str = "") -> str | None:
+    """Load text from various document formats based on file extension."""
+    ext = os.path.splitext(path)[1].lower()
+    if ext == ".pdf":
+        return load_pdf_with_password(path, password)
+    if ext == ".docx":
+        return load_docx(path)
+    if ext == ".txt":
+        return load_txt(path)
+    if ext in {".ppt", ".pptx"}:
+        return load_pptx(path)
+    return None
 
 
 def create_vector_store(text: str) -> FAISS:
