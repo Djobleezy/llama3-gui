@@ -50,7 +50,7 @@ with st.sidebar:
         st.session_state.history = []
     st.divider()
     st.header("Model")
-    models = ["llama3", "DeepSeek-R1-Distill-Qwen-32B"]
+    models = ["llama3", "deepseek-r1:32b"]
     current = st.session_state.model
     model_choice = st.selectbox("Model", models, index=models.index(current))
     if model_choice != current:
