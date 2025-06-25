@@ -1,11 +1,11 @@
 # llama3-gui
 
-This project provides a minimal interface for querying local documents using the LLaMA 3 or DeepSeek-R1-Distill-Qwen-32B model via [Ollama](https://ollama.ai/). It runs entirely locally and requires no external API keys.
+This project provides a minimal interface for querying local documents using the LLaMA 3 or deepseek-r1:32b model via [Ollama](https://ollama.ai/). It runs entirely locally and requires no external API keys.
 
 ## Quick start
 
 1. Install [Docker](https://docs.docker.com/get-docker/) and `docker-compose`.
-2. Run `docker-compose up --build` to start the Ollama server and Streamlit app. Both `llama3` and `DeepSeek-R1-Distill-Qwen-32B` are preloaded during the build.
+2. Run `docker-compose up --build` to start the Ollama server and Streamlit app. Both `llama3` and `deepseek-r1:32b` are preloaded during the build.
 3. Open `http://localhost:8501` in your browser and upload a PDF, DOCX, TXT or PPTX file. If you upload a PDF that is password protected, supply the password when prompted.
 4. Use the chat box at the bottom to ask questions about the document. Messages appear in a chat-style layout and the sidebar lets you reset or clear history. Switching models mid-conversation will also restart the chat. Set the `OLLAMA_MODEL` environment variable to change the default model.
 
@@ -17,7 +17,7 @@ The app now maintains context between questions using a conversational retrieval
 - Page references in answers when available.
 - A button to download your chat transcript.
 - Sliders to tweak model temperature and token limits (up to 8192 tokens).
-- A dropdown to select between `llama3` and `DeepSeek-R1-Distill-Qwen-32B`.
+- A dropdown to select between `llama3` and `deepseek-r1:32b`.
   Changing the model clears the chat history so the new model starts fresh.
 
 The temperature slider controls the randomness of the model's responses:
@@ -39,7 +39,7 @@ The containers should run on Linux, macOS or Windows as long as Docker is availa
 
 To run in an airgapped environment you must build the Docker images while you
 still have network access. The custom `Dockerfile.ollama` preloads both the
-`llama3` and `DeepSeek-R1-Distill-Qwen-32B` models and the app image downloads
+`llama3` and `deepseek-r1:32b` models and the app image downloads
 the required sentence-transformer embeddings.
 
 ```bash

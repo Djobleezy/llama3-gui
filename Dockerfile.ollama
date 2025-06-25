@@ -3,7 +3,7 @@ RUN ollama serve & \
     OLLAMA_PID=$! && \
     sleep 5 && \
     ollama pull llama3 && \
-    ollama pull DeepSeek-R1-Distill-Qwen-32B && \
+    ollama pull deepseek-r1:32b && \
     kill $OLLAMA_PID
 
 FROM ollama/ollama:latest
