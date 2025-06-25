@@ -17,9 +17,26 @@ def load_docx(path: str) -> str:
 
 
 def load_txt(path: str) -> str:
-    """Return the text content from a plain text file."""
-    with open(path, "r", encoding="utf-8") as f:
-        return f.read()
+    """Return the text content from a plain text file.
+
+    The function first attempts to decode the file as UTF-8. If that fails
+    due to a ``UnicodeDecodeError`` it falls back to a list of common
+    encodings before finally ignoring undecodable bytes. This prevents
+    crashes when the text file uses a legacy code page such as Windows-1252.
+    """
+
+    with open(path, "rb") as f:
+        raw = f.read()
+
+    encodings = ["utf-8", "cp1252", "latin-1"]
+    for enc in encodings:
+        try:
+            return raw.decode(enc)
+        except UnicodeDecodeError:
+            continue
+
+    # As a last resort, drop undecodable bytes.
+    return raw.decode("utf-8", errors="ignore")
 
 
 def load_pptx(path: str) -> str:
