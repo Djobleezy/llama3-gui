@@ -106,13 +106,15 @@ if uploaded_files and process_clicked:
         else:
             st.session_state.qa = None
 
-if st.session_state.qa:
-    with col_chat:
-        for msg in st.session_state.history:
-            with st.chat_message(msg[0]):
-                st.markdown(msg[1])
+with col_chat:
+    for msg in st.session_state.history:
+        with st.chat_message(msg[0]):
+            st.markdown(msg[1])
 
-        if prompt := st.chat_input("Ask a question about your document:"):
+    prompt = st.chat_input("Ask a question about your document:")
+
+    if prompt:
+        if st.session_state.qa:
             with st.chat_message("user"):
                 st.markdown(prompt)
             clarified = rewrite_question(prompt, st.session_state.history)
@@ -130,3 +132,5 @@ if st.session_state.qa:
                 st.markdown(answer)
             st.session_state.history.append(("user", prompt))
             st.session_state.history.append(("assistant", answer))
+        else:
+            st.warning("Please process a document before asking questions.")
