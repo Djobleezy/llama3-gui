@@ -6,6 +6,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.embeddings import SentenceTransformerEmbeddings
 from langchain.vectorstores import FAISS
 from langchain.llms import Ollama
+from langchain_community.llms.ollama import OllamaEndpointNotFoundError
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
 from langchain.schema import Document
@@ -15,6 +16,16 @@ MAX_TOKENS = 8192
 
 # Default model used by the Ollama API.
 DEFAULT_MODEL = os.getenv("OLLAMA_MODEL", "llama3")
+
+
+def _invoke_with_model_check(llm: Ollama, prompt: str) -> str:
+    """Call ``llm.invoke`` and show a helpful error if the model is missing."""
+    try:
+        return llm.invoke(prompt).strip()
+    except OllamaEndpointNotFoundError as exc:
+        raise RuntimeError(
+            f"Model '{llm.model}' not found. Run 'ollama pull {llm.model}' to install it."
+        ) from exc
 
 
 def summarize_text(text: str, model: str = DEFAULT_MODEL) -> str:
@@ -37,7 +48,7 @@ def summarize_text(text: str, model: str = DEFAULT_MODEL) -> str:
 
     for chunk in chunks:
         prompt = f"Summarize the following text:\n\n{chunk}"
-        partial_summaries.append(llm.invoke(prompt).strip())
+        partial_summaries.append(_invoke_with_model_check(llm, prompt))
 
     if len(partial_summaries) == 1:
         return partial_summaries[0]
@@ -46,7 +57,7 @@ def summarize_text(text: str, model: str = DEFAULT_MODEL) -> str:
         "Combine the following summaries into a single comprehensive summary:\n\n"
         + "\n".join(partial_summaries)
     )
-    return llm.invoke(combo_prompt).strip()
+    return _invoke_with_model_check(llm, combo_prompt)
 
 
 def load_docx(path: str) -> list[Document]:
@@ -185,7 +196,7 @@ def rewrite_question(
         f"History:\n{history_text}\n\nQuestion: {question}\n\nRewritten:"
     )
     try:
-        return llm.invoke(prompt).strip()
+        return _invoke_with_model_check(llm, prompt)
     except Exception:
         return question
 
