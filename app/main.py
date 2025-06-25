@@ -1,6 +1,7 @@
 import os
 import tempfile
 import streamlit as st
+from langchain_community.llms.ollama import OllamaEndpointNotFoundError
 from utils import (
     load_document,
     create_vector_store,
@@ -149,7 +150,14 @@ with col_chat:
                 model=st.session_state.model,
             )
             with st.spinner("Thinking…"):
-                result = st.session_state.qa.invoke({"question": clarified})
+                try:
+                    result = st.session_state.qa.invoke({"question": clarified})
+                except OllamaEndpointNotFoundError:
+                    st.error(
+                        f"Model '{st.session_state.model}' not found. "
+                        f"Run 'ollama pull {st.session_state.model}' to install it."
+                    )
+                    st.stop()
                 answer = result["answer"]
                 docs = result.get("source_documents", [])
                 if docs:
