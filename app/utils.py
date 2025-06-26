@@ -15,7 +15,7 @@ from langchain.schema import Document
 MAX_TOKENS = 8192
 
 # Default model used by the Ollama API.
-DEFAULT_MODEL = os.getenv("OLLAMA_MODEL", "llama3")
+DEFAULT_MODEL = os.getenv("OLLAMA_MODEL", "llama3.1:8b")
 
 
 def _invoke_with_model_check(llm: Ollama, prompt: str) -> str:
